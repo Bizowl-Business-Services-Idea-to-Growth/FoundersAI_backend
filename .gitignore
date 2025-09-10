@@ -1,0 +1,45 @@
+# --- Environment ---
+# Ignore the virtual environment folder
+venv/
+.venv/
+env/
+ENV/
+
+# Ignore sensitive environment variables
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore distribution and packaging files
+build/
+dist/
+*.egg-info/
+*.egg
+
+# --- IDEs and Editors ---
+# Ignore VS Code specific files
+.vscode/
+
+# Ignore PyCharm specific files
+.idea/
+
+# --- Testing & Coverage ---
+# Ignore test reports and cache
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- OS-specific ---
+# Ignore macOS specific files
+.DS_Store
+
+# Ignore Windows specific files
+Thumbs.db
