@@ -1,18 +1,26 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from app.core.database import db
 from app.services.gemini_service import query_gemini
-
-from pydantic import BaseModel
 
 class MessageRequest(BaseModel):
     message: str
 
 app = FastAPI()
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Frontend URLs
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
 
 @app.get("/users")
 async def get_users():
@@ -28,7 +36,9 @@ async def get_users():
 
 @app.post("/recommend")
 async def get_recommendation(request: MessageRequest):
-    body = await request.json()
-    user_message = body["message"]
-    recommendation = await query_gemini(user_message)
-    return {"recommendation": recommendation}
+    try:
+        # Use the Pydantic model directly, no need to parse JSON manually
+        recommendation = await query_gemini(request.message)
+        return {"recommendation": recommendation}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
