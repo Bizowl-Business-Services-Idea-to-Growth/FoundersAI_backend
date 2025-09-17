@@ -6,7 +6,7 @@ from typing import List, Any
 from app.core.database import db
 from app.services.gemini_service import query_gemini
 from app.services.mongodb_service import save_user_responses, get_user_responses
-
+from app.services.survey_data import steps
 
 class MessageRequest(BaseModel):
     message: str
@@ -93,10 +93,12 @@ async def get_chat_history():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
 @app.post("/save-responses")
 async def save_responses(data: SaveResponsesRequest):
     try:
-        await save_user_responses(data.userId, [resp.dict() for resp in data.responses])
+        # Pass both answers and question metadata
+        await save_user_responses(data.userId, [resp.dict() for resp in data.responses], steps)
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
