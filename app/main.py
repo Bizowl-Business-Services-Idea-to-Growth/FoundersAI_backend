@@ -1,12 +1,14 @@
+import os
 from fastapi import FastAPI, HTTPException,Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Any
-from app.core.database import db
+from app.core.database import db, ensure_indexes
 from app.services.gemini_service import query_gemini, build_prompt_from_responses
 from app.services.mongodb_service import save_user_responses, get_user_responses
 from app.services.survey_data import steps
+from app.api.auth import router as auth_router
 
 class CreateUserRequest(BaseModel):
     name: str
@@ -35,19 +37,34 @@ class SaveResponsesRequest(BaseModel):
 app = FastAPI()
 
 # Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+raw_origins = os.getenv("FRONTEND_ORIGINS")
+if raw_origins:
+    allow_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+else:
+    allow_origins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://founders-ai.vercel.app",
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include auth router
+app.include_router(auth_router)
+
+@app.on_event("startup")
+async def startup_event():
+    await ensure_indexes()
 
 
 @app.get("/")

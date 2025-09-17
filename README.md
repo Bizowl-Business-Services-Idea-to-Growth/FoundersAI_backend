@@ -6,6 +6,7 @@ This repository contains the backend service for FoundersAI, built with FastAPI.
 
 - **FastAPI Framework**: High-performance, easy-to-use web framework for building APIs.
 - **Custom LLM Integration**: Connects to any self-hosted or third-party LLM via an HTTP API.
+- **JWT Authentication**: User signup/login with hashed passwords and bearer JWT tokens.
 - **Scalable Architecture**: Organized into modular components (core, services, models, api) for easy maintenance and expansion.
 - **Asynchronous Support**: Built with `async` and `await` for handling concurrent requests efficiently.
 - **Dependency Injection**: Uses FastAPI's dependency injection system for managing resources like database connections and HTTP clients.
@@ -69,14 +70,16 @@ FoundersAI_backend/
     ```
 
 4.  **Configure environment variables:**
-    Create a `.env` file in the root directory by copying the example file:
+    Create a `.env` file in the root directory (if it doesn't exist) and include at least:
+    ```ini
+    MONGO_URI=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
+    DB_NAME=founders_ai_db
+    GOOGLE_API_KEY=your_gemini_api_key
+    JWT_SECRET_KEY=super_long_random_secret
+    ACCESS_TOKEN_EXPIRE_MINUTES=60
+    FRONTEND_ORIGINS=http://localhost:5174,http://localhost:5173,https://founders-ai.vercel.app
     ```
-    cp .env.example .env
-    ```
-    Open the `.env` file and set the `LLM_API_URL` to your model's endpoint:
-    ```
-    LLM_API_URL="http://your-llm-api-host:port/generate"
-    ```
+    Optional: adjust token expiry as needed.
 
 ### Running the Application
 
@@ -98,12 +101,66 @@ The API provides interactive documentation via Swagger UI and ReDoc.
 
 ### Example Request
 
-You can test the LLM endpoint by sending a `POST` request to `/api/v1/llm/generate-response`.
+### Auth Endpoints
 
-**Using `curl`:**
+Base path: `/auth`
 
+1. Signup
 ```
-curl -X POST "http://127.0.0.1:8000/api/v1/llm/generate-response" \
--H "Content-Type: application/json" \
--d '{"text": "Explain the importance of APIs in modern software."}'
+POST /auth/signup
+{
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "password": "StrongPass123!"
+}
 ```
+Response:
+```
+{
+    "id": "...",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "created_at": "2024-01-01T12:00:00Z"
+}
+```
+
+2. Login
+```
+POST /auth/login
+{
+    "email": "jane@example.com",
+    "password": "StrongPass123!"
+}
+```
+Response:
+```
+{
+    "access_token": "<jwt>",
+    "token_type": "bearer"
+}
+```
+
+3. Current User
+```
+GET /auth/me
+Authorization: Bearer <jwt>
+```
+
+### Example curl Login
+```
+curl -X POST http://127.0.0.1:8000/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"jane@example.com","password":"StrongPass123!"}'
+```
+
+Use the returned `access_token` as a Bearer token for protected endpoints.
+
+### Security Notes
+- Emails stored in lowercase; unique index enforced.
+- Passwords hashed with bcrypt via Passlib.
+- JWT includes standard claims plus user email & name.
+- Configure `JWT_SECRET_KEY` with a long random value (32+ chars).
+- Set `FRONTEND_ORIGINS` (comma-separated) to control allowed CORS origins. If not set, sensible defaults including ports 5173/5174 are used.
+
+### LLM Example (existing)
+Refer to `/recommend` endpoint to query Gemini model.

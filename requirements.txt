@@ -4,3 +4,8 @@ python-dotenv
 httpx
 motor
 google-generativeai
+PyJWT
+passlib[bcrypt]
+pytest
+httpx
+email-validator

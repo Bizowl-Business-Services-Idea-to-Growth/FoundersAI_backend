@@ -1,12 +1,6 @@
 from typing import List, Dict, Any
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
 from datetime import datetime
-
-
-MONGO_URI = os.getenv("MONGO_URI")
-client = AsyncIOMotorClient(MONGO_URI)
-db = client["founders_ai_db"]  # use your actual DB name
+from app.core.database import db
 
 collection = db["user_responses"]  # collection name
 
