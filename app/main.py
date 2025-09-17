@@ -2,11 +2,26 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
+from typing import List, Any
 from app.core.database import db
 from app.services.gemini_service import query_gemini
+from app.services.mongodb_service import save_user_responses, get_user_responses
+
 
 class MessageRequest(BaseModel):
     message: str
+
+
+class ResponseItem(BaseModel):
+    id: int
+    type: str
+    answer: Any
+
+
+class SaveResponsesRequest(BaseModel):
+    userId: str
+    responses: List[ResponseItem]
+
 
 app = FastAPI()
 
@@ -24,9 +39,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
 
 @app.get("/users")
 async def get_users():
@@ -39,6 +56,7 @@ async def get_users():
         return users
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/recommend")
 async def get_recommendation(request: MessageRequest):
@@ -61,6 +79,7 @@ async def get_recommendation(request: MessageRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/chat-history")
 async def get_chat_history():
     try:
@@ -72,3 +91,22 @@ async def get_chat_history():
         return {"chats": chats}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/save-responses")
+async def save_responses(data: SaveResponsesRequest):
+    try:
+        await save_user_responses(data.userId, [resp.dict() for resp in data.responses])
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/get-responses/{user_id}")
+async def fetch_responses(user_id: str):
+    document = await get_user_responses(user_id)
+    if document:
+        document["_id"] = str(document["_id"])  # Convert ObjectId to string
+        return document
+    else:
+        raise HTTPException(status_code=404, detail="User responses not found")
