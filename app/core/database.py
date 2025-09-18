@@ -29,8 +29,11 @@ async def ensure_indexes():
     try:
         # Users: unique email
         await db.users.create_index("email", unique=True)
-        # Responses: index on userId
-        await db.user_responses.create_index([("userId", ASCENDING)])
+        # Responses: index on userId + assessmentId + created_at
+        await db.user_responses.create_index([("userId", ASCENDING), ("assessmentId", ASCENDING)])
+        await db.user_responses.create_index([("userId", ASCENDING), ("created_at", ASCENDING)])
+        # Roadmaps cache: composite key
+        await db.roadmaps.create_index([("userId", ASCENDING), ("assessmentId", ASCENDING)], unique=True)
         print("Indexes ensured")
     except PyMongoError as e:
         print(f"Index creation error: {e}")
