@@ -113,7 +113,7 @@ async def create_user(user: CreateUserRequest = Body(...)):
         name=created_user["name"],
         email=created_user["email"],
     )
-
+#recommend
 @app.post("/recommend")
 async def get_recommendation(request: MessageRequest):
     try:
