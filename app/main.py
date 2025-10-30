@@ -123,7 +123,7 @@ async def get_recommendation(request: MessageRequest):
             "user_message": request.message,
             "ai_response": recommendation,
             "timestamp": datetime.utcnow(),
-            "model": "gemini-1.5-flash",
+            "model": "gemini-flash-latest",
         }
 
         await db.chats.insert_one(chat_record)
