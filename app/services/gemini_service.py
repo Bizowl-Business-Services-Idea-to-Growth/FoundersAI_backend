@@ -8,6 +8,13 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 
 async def query_gemini(prompt: str) -> str:
+    """Query Gemini for a roadmap text.
+
+    Raises a clear error if GOOGLE_API_KEY is not configured to avoid opaque 500s.
+    """
+    if not GOOGLE_API_KEY:
+        raise RuntimeError("GOOGLE_API_KEY is not set. Please configure it in your environment to enable roadmap generation.")
+
     # Run the synchronous Gemini call in thread executor to avoid blocking async loop
     loop = asyncio.get_running_loop()
     model = genai.GenerativeModel("gemini-1.5-flash")

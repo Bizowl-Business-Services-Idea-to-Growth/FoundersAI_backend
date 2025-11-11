@@ -1,5 +1,7 @@
 # FoundersAI Backend
+
 ##
+
 This repository contains the backend service for FoundersAI, built with FastAPI. The service provides an API to interact with a custom Large Language Model (LLM).
 
 ## Features
@@ -106,6 +108,7 @@ The API provides interactive documentation via Swagger UI and ReDoc.
 Base path: `/auth`
 
 1. Signup
+
 ```
 POST /auth/signup
 {
@@ -114,7 +117,9 @@ POST /auth/signup
     "password": "StrongPass123!"
 }
 ```
+
 Response:
+
 ```
 {
     "id": "...",
@@ -125,6 +130,7 @@ Response:
 ```
 
 2. Login
+
 ```
 POST /auth/login
 {
@@ -132,7 +138,9 @@ POST /auth/login
     "password": "StrongPass123!"
 }
 ```
+
 Response:
+
 ```
 {
     "access_token": "<jwt>",
@@ -141,12 +149,14 @@ Response:
 ```
 
 3. Current User
+
 ```
 GET /auth/me
 Authorization: Bearer <jwt>
 ```
 
 ### Example curl Login
+
 ```
 curl -X POST http://127.0.0.1:8000/auth/login \
     -H "Content-Type: application/json" \
@@ -156,6 +166,7 @@ curl -X POST http://127.0.0.1:8000/auth/login \
 Use the returned `access_token` as a Bearer token for protected endpoints.
 
 ### Security Notes
+
 - Emails stored in lowercase; unique index enforced.
 - Passwords hashed with bcrypt via Passlib.
 - JWT includes standard claims plus user email & name.
@@ -163,4 +174,35 @@ Use the returned `access_token` as a Bearer token for protected endpoints.
 - Set `FRONTEND_ORIGINS` (comma-separated) to control allowed CORS origins. If not set, sensible defaults including ports 5173/5174 are used.
 
 ### LLM Example (existing)
+
 Refer to `/recommend` endpoint to query Gemini model.
+
+### Assessment & Roadmap Endpoints
+
+- Save responses (stores an assessment and returns an ID):
+
+  - POST `/save-responses`
+  - Body:
+    ```json
+    {
+        "userId": "string",
+        "responses": [ { "id": 1, "type": "options", "answer": "..." }, ... ]
+    }
+    ```
+  - Response: `{ "status": "success", "assessmentId": "<uuid>" }`
+
+- List assessments for a user: GET `/assessments/{user_id}`
+- Get latest assessment: GET `/get-responses/{user_id}`
+- Get a specific assessment: GET `/get-responses/{user_id}/{assessment_id}`
+- Generate roadmap (uses Gemini, caches results):
+  - Latest: GET `/generate-roadmap/{user_id}`
+  - Specific: GET `/generate-roadmap/{user_id}/{assessment_id}`
+
+Note: Roadmap generation requires `GOOGLE_API_KEY` to be set. If it's missing, the API returns a clear error.
+
+### Health Check
+
+- GET `/health` returns:
+  ```json
+  { "status": "ok", "db": "ok" | "error: ...", "gemini_api_key_set": true|false }
+  ```

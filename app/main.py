@@ -82,6 +82,29 @@ def read_root():
     return {"Hello": "World"}
 
 
+@app.get("/health")
+async def health():
+    """Basic health and configuration check.
+
+    Returns:
+    - status: always "ok" if handler runs
+    - db: "ok" if MongoDB ping succeeds, otherwise error message
+    - gemini_api_key_set: boolean indicating if GOOGLE_API_KEY is configured
+    """
+    # Check DB connectivity
+    db_status = "ok"
+    try:
+        # ping command recommended for MongoDB
+        await db.command("ping")
+    except Exception as e:
+        db_status = f"error: {e}"
+
+    import os as _os
+    gemini_key_set = bool(_os.getenv("GOOGLE_API_KEY"))
+
+    return {"status": "ok", "db": db_status, "gemini_api_key_set": gemini_key_set}
+
+
 @app.get("/users")
 async def get_users():
     try:
